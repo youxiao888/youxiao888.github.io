@@ -1,0 +1,14 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryCard from '../../components/EntryCard.astro';
+import { getCollection } from 'astro:content';
+const items = (await getCollection('entries',({data})=>!data.draft && ['project','experiment'].includes(data.kind))).sort((a,b)=>+b.data.date - +a.data.date);
+---
+<Base title="项目与实验">
+  <div class="container">
+    <header class="page-head"><span class="eyebrow">BUILD, MEASURE, REVISE</span><h1>项目与实验</h1>
+      <p>将理论、代码与实践联系起来。保留实现过程、可复现性、限制条件与后续改进，而不仅展示最终效果。</p>
+    </header>
+    {items.length>0 ? <div class="entry-list">{items.map(entry=><EntryCard entry={entry}/>)}</div> : <p class="empty">项目正在整理，欢迎稍后查看。</p>}
+  </div>
+</Base>

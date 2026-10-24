@@ -1,0 +1,29 @@
+---
+import Base from '../../layouts/Base.astro';
+import { DOMAINS, GROUPS } from '../../data/ontology';
+import { getCollection } from 'astro:content';
+const entries = await getCollection('entries', ({data}) => !data.draft);
+---
+<Base title="知识领域">
+  <div class="container">
+    <header class="page-head">
+      <span class="eyebrow">THE MAP OF CURIOSITY</span>
+      <h1>知识领域</h1>
+      <p>以领域为入口，不用学科边界限制问题。每个领域可以继续扩展分支，并通过跨学科文章建立连接。</p>
+    </header>
+    {GROUPS.map(group => <section class="section">
+      <div class="section-heading"><h2>{group.name}</h2></div>
+      <div class="domain-grid">
+        {DOMAINS.filter(d=>d.group === group.id).map(domain =>
+          <a href={'/library/?domain=' + domain.id} class="domain-card">
+            <span class="card-arrow" aria-hidden="true">↗</span>
+            <strong>{domain.name}</strong>
+            <small>{domain.en}</small>
+            <small style="margin-top:12px">{domain.children.join(' / ')}</small>
+            <small style="margin-top:8px">{entries.filter(e=>e.data.domain === domain.id).length} 篇内容</small>
+          </a>
+        )}
+      </div>
+    </section>)}
+  </div>
+</Base>

@@ -1,0 +1,53 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { domainName, CONTENT_KINDS, CLAIM_TYPES, QUESTION_MODES, EVIDENCE_STATES } from '../../data/ontology';
+export async function getStaticPaths() {
+  const entries = await getCollection('entries', ({data}) => !data.draft);
+  return entries.map(entry => ({params:{slug:entry.id}, props:{entry}}));
+}
+const { entry } = Astro.props as { entry: CollectionEntry<'entries'> };
+const { Content } = await render(entry);
+const data = entry.data;
+const related = (await getCollection('entries', ({data})=>!data.draft)).filter(e=>data.related.includes(e.id));
+---
+<Base title={data.title} description={data.summary}>
+  <div class="container article-layout">
+    <article class="article">
+      <header class="article-header">
+        <a class="kicker" href={'/library/?domain='+data.domain}>← {domainName(data.domain)}</a>
+        <h1>{data.title}</h1>
+        <p class="article-summary">{data.summary}</p>
+        <div class="meta-row">
+          <span class="pill pill-accent">{CONTENT_KINDS[data.kind]}</span>
+          <span class="pill">{CLAIM_TYPES[data.claim].label}</span>
+          <span class="pill">{QUESTION_MODES[data.question].label}</span>
+          <time class="mini-date" datetime={data.date.toISOString()}>{data.date.toLocaleDateString('zh-CN')}</time>
+        </div>
+      </header>
+      {data.sample && <p class="caution">这是用于演示网站结构的样例文章，不代表站长已发表的研究成果或个人立场。</p>}
+      <div class="prose" data-pagefind-body><Content /></div>
+      {data.sources.length > 0 && <section class="sources">
+        <h2>资料与证据</h2>
+        <ol>{data.sources.map(s=><li><a href={s.url} target="_blank" rel="noopener noreferrer">{s.name}</a> <small>（{s.role === 'primary' ? '一手资料' : s.role === 'secondary' ? '二手研究' : '背景资料'}）</small></li>)}</ol>
+      </section>}
+      {data.originalUrl && <p class="sources"><a href={data.originalUrl} target="_blank" rel="noopener noreferrer">原始发布页面 ↗</a></p>}
+      {related.length > 0 && <section class="sources"><h2>相关问题</h2><ul>{related.map(e=><li><a href={'/notes/'+e.id+'/'}>{e.data.title}</a></li>)}</ul></section>}
+    </article>
+    <aside class="article-aside" aria-label="文章的认识论信息">
+      <h2>问题与证据结构</h2>
+      <dl>
+        <dt>领域</dt><dd>{domainName(data.domain)}{data.subdomains.length>0 ? ' / ' + data.subdomains.join(' / ') : ''}</dd>
+        <dt>内容形式</dt><dd>{CONTENT_KINDS[data.kind]}</dd>
+        <dt>主张性质</dt><dd>{CLAIM_TYPES[data.claim].label}</dd>
+        <dt>问题性质</dt><dd>{QUESTION_MODES[data.question].label}</dd>
+        <dt>证据状态</dt><dd>{EVIDENCE_STATES[data.evidence]}</dd>
+        <dt>更新</dt><dd>{(data.updated ?? data.date).toLocaleDateString('zh-CN')}</dd>
+      </dl>
+      <p><strong>为什么区分这些标签？</strong><br/>{CLAIM_TYPES[data.claim].description} {QUESTION_MODES[data.question].description}</p>
+      <p>标签描述当前论证的性质及证据状态，并不构成对整篇文章“绝对正确”的认证。</p>
+      {data.tags.length>0 && <div class="meta-row">{data.tags.map(tag=><span class="pill">{tag}</span>)}</div>}
+    </aside>
+  </div>
+</Base>

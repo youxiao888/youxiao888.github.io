@@ -1,0 +1,43 @@
+name: Personal Atlas Build Check
+
+on:
+  push:
+    branches:
+      - feat/personal-intellectual-atlas
+    paths:
+      - 'site/**'
+      - '.github/workflows/personal-atlas-ci.yml'
+  pull_request:
+    paths:
+      - 'site/**'
+      - '.github/workflows/personal-atlas-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate Astro content and templates
+        run: npm run check
+      - name: Build static site and search index
+        run: npm run build
+      - name: Archive generated preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: personal-atlas-static-preview
+          path: site/dist
+          retention-days: 7

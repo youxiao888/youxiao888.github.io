@@ -1,0 +1,65 @@
+---
+import '../styles/global.css';
+import 'katex/dist/katex.min.css';
+const { title = '思考与探索', description = '个人知识与思想图谱：科学、数学、人文与跨学科探索。' } = Astro.props;
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/', label: '首页' },
+  { href: '/atlas/', label: '知识领域' },
+  { href: '/library/', label: '文章与问题' },
+  { href: '/projects/', label: '项目与实验' },
+  { href: '/about/', label: '关于' }
+];
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f7f7f5" />
+    <link rel="canonical" href={Astro.url.href} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{title} · Personal Atlas</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳转正文</a>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="/" aria-label="返回首页"><span class="brand-mark">∴</span><span>Personal Atlas</span></a>
+        <nav aria-label="主导航" class="desktop-nav">
+          {nav.map(item => <a class:list={{ active: path === item.href }} href={item.href}>{item.label}</a>)}
+        </nav>
+        <div class="header-actions">
+          <a class="search-action" href="/search/" aria-label="搜索全站">⌕ <span>搜索</span></a>
+          <button id="theme-switch" aria-label="切换明暗主题" type="button" title="切换明暗主题">◐</button>
+        </div>
+      </div>
+      <nav class="container mobile-nav" aria-label="移动端主导航">
+        {nav.map(item => <a class:list={{ active: path === item.href }} href={item.href}>{item.label}</a>)}
+      </nav>
+    </header>
+    <main id="main"><slot /></main>
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>Personal Atlas · 独立思考，持续修订。</span>
+        <span>知识不等于观点；论证必须标明前提与证据。</span>
+      </div>
+    </footer>
+    <script is:inline>
+      (() => {
+        const key = 'atlas-theme';
+        const root = document.documentElement;
+        try {
+          const stored = localStorage.getItem(key);
+          if (stored === 'dark' || stored === 'light') root.dataset.theme = stored;
+        } catch {}
+        document.getElementById('theme-switch')?.addEventListener('click', () => {
+          const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+          root.dataset.theme = next;
+          try { localStorage.setItem(key, next); } catch {}
+        });
+      })();
+    </script>
+  </body>
+</html>

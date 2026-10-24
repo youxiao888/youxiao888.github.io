@@ -1,0 +1,69 @@
+---
+import Base from '../layouts/Base.astro';
+import EntryCard from '../components/EntryCard.astro';
+import { getCollection } from 'astro:content';
+import { DOMAINS, GROUPS } from '../data/ontology';
+const entries = (await getCollection('entries', ({data}) => !data.draft))
+  .sort((a,b) => +b.data.date - +a.data.date);
+const featured = entries.filter(item => item.data.featured).slice(0,4);
+---
+<Base title="首页" description="Personal Atlas：横跨自然科学、数学、哲学、人文、艺术与经济的个人研究与思想空间。">
+  <div class="container">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">A PERSONAL INTELLECTUAL ATLAS</span>
+        <h1>探索世界，<br /><em>理解其所以然。</em></h1>
+        <p>从数学与自然科学，到哲学、心理学、经济、社会与艺术。记录值得追问的问题，区分事实、解释与立场，让知识在证据和论证中不断生长。</p>
+        <div class="button-row">
+          <a href="/atlas/" class="btn">进入知识领域 <span aria-hidden="true">↗</span></a>
+          <a href="/library/" class="btn btn-outline">浏览全部文章</a>
+        </div>
+      </div>
+      <aside class="hero-note">
+        <span class="kicker">INQUIRY, NOT CERTAINTY</span>
+        <b>一个可以不断修订的认知地图</b>
+        记录确定的结论，也认真对待尚无答案的问题；尊重经验事实，也公开价值前提。
+      </aside>
+    </section>
+    <section class="section">
+      <div class="section-heading">
+        <h2>知识领域 <span class="kicker">/ DOMAINS</span></h2>
+        <a href="/atlas/">查看完整索引 ↗</a>
+      </div>
+      <p class="section-lead">这不是互相隔绝的学科目录。领域用于定位问题，知识之间的联系则在文章、标签、相关问题和后续专题中继续展开。</p>
+      {GROUPS.map(group => {
+        const items = DOMAINS.filter(d => d.group === group.id);
+        return <div class="domain-group">
+          <h3>{group.name}</h3>
+          <div class="domain-grid">
+            {items.map(domain => <a class="domain-card" href={'/library/?domain='+domain.id}>
+              <span aria-hidden="true" class="card-arrow">↗</span>
+              <strong>{domain.name}</strong><small>{domain.en}</small>
+            </a>)}
+          </div>
+        </div>;
+      })}
+    </section>
+    <section class="section">
+      <div class="section-heading"><h2>如何阅读这个网站</h2></div>
+      <div class="path-grid">
+        <a class="path-card" href="/library/?question=decidable">
+          <span class="path-number">01 /</span><h3>可判定的问题</h3>
+          <p>明确前提、形式证明、实验数据与可检验的事实主张；同时区分已确立与证据尚不充分。</p>
+        </a>
+        <a class="path-card" href="/library/?question=open">
+          <span class="path-number">02 /</span><h3>开放的探讨</h3>
+          <p>哲学、价值与审美等问题，比较不同框架与立场，展示理由、反对意见和未解决部分。</p>
+        </a>
+        <a class="path-card" href="/library/?question=mixed">
+          <span class="path-number">03 /</span><h3>事实与立场的交界</h3>
+          <p>经济、社会与公共政策等复杂议题，将事实判断、因果推断和应然判断分开讨论。</p>
+        </a>
+      </div>
+    </section>
+    {featured.length > 0 && <section class="section">
+      <div class="section-heading"><h2>探索中的问题</h2><a href="/library/">全部内容 ↗</a></div>
+      <div class="entry-list">{featured.map(entry => <EntryCard entry={entry}/>)}</div>
+    </section>}
+  </div>
+</Base>

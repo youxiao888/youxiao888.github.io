@@ -1,0 +1,21 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { domainName, CONTENT_KINDS, CLAIM_TYPES, QUESTION_MODES } from '../data/ontology';
+const { entry } = Astro.props as { entry: CollectionEntry<'entries'> };
+const { data } = entry;
+---
+<article class="entry-card" data-domain={data.domain} data-claim={data.claim} data-question={data.question} data-kind={data.kind} data-search={(data.title + ' ' + data.summary + ' ' + data.tags.join(' ')).toLowerCase()}>
+  <div class="meta-row">
+    <span class="pill pill-accent">{domainName(data.domain)}</span>
+    <span class="pill">{CONTENT_KINDS[data.kind]}</span>
+    <span class="pill">{CLAIM_TYPES[data.claim].label}</span>
+  </div>
+  <h3><a href={'/notes/' + entry.id + '/'}>{data.title}</a></h3>
+  <p>{data.summary}</p>
+  <div class="meta-row">
+    <span class="mini-date">{data.date.toLocaleDateString('zh-CN', { year:'numeric',month:'2-digit',day:'2-digit' })}</span>
+    <span aria-hidden="true">·</span>
+    <span class="mini-date">{QUESTION_MODES[data.question].label}</span>
+    {data.sample && <span class="pill">示例内容</span>}
+  </div>
+</article>

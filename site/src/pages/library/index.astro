@@ -1,0 +1,64 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryCard from '../../components/EntryCard.astro';
+import { getCollection } from 'astro:content';
+import { DOMAINS, CONTENT_KINDS, CLAIM_TYPES, QUESTION_MODES } from '../../data/ontology';
+const entries = (await getCollection('entries', ({data})=>!data.draft)).sort((a,b)=>+b.data.date - +a.data.date);
+---
+<Base title="文章与问题" description="按照学科、内容形式、事实与观点性质，检索个人知识与思想文章。">
+  <div class="container">
+    <header class="page-head"><span class="eyebrow">WRITINGS & QUESTIONS</span><h1>文章与问题</h1>
+      <p>按领域、内容形式、论题性质独立筛选。这里不使用“客观 / 主观”二分来代替对证据、前提和争议的细致分析。</p>
+    </header>
+    <form id="filters" class="filter-bar" aria-label="筛选文章">
+      <input id="search" class="field" type="search" placeholder="搜索标题、简介或标签" aria-label="搜索标题和标签"/>
+      <select class="field" id="domain" aria-label="学科领域">
+        <option value="">全部领域</option>
+        {DOMAINS.map(d=><option value={d.id}>{d.name}</option>)}
+      </select>
+      <select class="field" id="claim" aria-label="主张性质">
+        <option value="">全部主张性质</option>
+        {Object.entries(CLAIM_TYPES).map(([id,d])=><option value={id}>{d.label}</option>)}
+      </select>
+      <select class="field" id="question" aria-label="问题类型">
+        <option value="">全部问题类型</option>
+        {Object.entries(QUESTION_MODES).map(([id,d])=><option value={id}>{d.label}</option>)}
+      </select>
+    </form>
+    <p class="result-count" id="count" aria-live="polite">{entries.length} 篇内容</p>
+    <div class="entry-list" id="entries">{entries.map(entry=><EntryCard entry={entry}/>)}</div>
+    <p class="empty" id="empty" hidden>没有匹配内容。请尝试减少筛选条件。</p>
+  </div>
+  <script is:inline>
+    (() => {
+      const form = document.querySelector('#filters');
+      if (!form) return;
+      const controls = ['search','domain','claim','question'].map(id => document.getElementById(id));
+      const cards = [...document.querySelectorAll('#entries .entry-card')];
+      const params = new URLSearchParams(location.search);
+      controls.forEach(el => { if (el && params.has(el.id)) el.value = params.get(el.id) || ''; });
+      function update() {
+        const [q,domain,claim,question] = controls.map(el => el?.value || '');
+        const query = q.toLocaleLowerCase().trim();
+        let visible = 0;
+        for (const card of cards) {
+          const show = (!query || card.dataset.search.includes(query)) &&
+            (!domain || card.dataset.domain === domain) &&
+            (!claim || card.dataset.claim === claim) &&
+            (!question || card.dataset.question === question);
+          card.hidden = !show;
+          if (show) visible++;
+        }
+        document.getElementById('count').textContent = visible + ' 篇内容';
+        document.getElementById('empty').hidden = visible !== 0;
+        const next = new URLSearchParams();
+        controls.forEach(el => { if (el?.value.trim()) next.set(el.id, el.value.trim()); });
+        history.replaceState(null, '', location.pathname + (next.size ? '?' + next : ''));
+      }
+      form.addEventListener('submit', event => event.preventDefault());
+      form.addEventListener('input', update);
+      form.addEventListener('change', update);
+      update();
+    })();
+  </script>
+</Base>

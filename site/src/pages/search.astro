@@ -1,0 +1,56 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="站内搜索">
+  <div class="container">
+    <header class="page-head"><span class="eyebrow">FIND A CONNECTION</span><h1>搜索知识与问题</h1>
+      <p>按全文搜索内容；如果需要在多个维度之间筛选，请使用“文章与问题”。索引在网站构建时生成，无需搜索服务器。</p>
+    </header>
+    <label for="search-input">关键词</label>
+    <input class="field" id="search-input" type="search" placeholder="例如：概率、伦理、控制理论" autocomplete="off" style="max-width:740px;display:block;margin-top:8px" />
+    <p class="result-count" id="search-status" role="status">请输入关键词。</p>
+    <div id="search-results" class="search-results"></div>
+    <p class="caution" style="max-width:740px">本地开发模式不会生成 Pagefind 索引。运行 npm run build 后部署或预览 dist 目录才能使用完整搜索。</p>
+  </div>
+  <script is:inline type="module">
+    const input = document.getElementById('search-input');
+    const status = document.getElementById('search-status');
+    const results = document.getElementById('search-results');
+    let pagefind;
+    try {
+      pagefind = await import('/pagefind/pagefind.js');
+      await pagefind.init();
+    } catch {
+      status.textContent = '当前未找到搜索索引，请先构建生产版本。';
+    }
+    let sequence = 0;
+    async function search() {
+      if (!pagefind) return;
+      const value = input.value.trim();
+      const seq = ++sequence;
+      results.replaceChildren();
+      if (!value) { status.textContent = '请输入关键词。'; return; }
+      status.textContent = '正在查找…';
+      try {
+        const res = await pagefind.search(value);
+        const data = await Promise.all(res.results.slice(0,15).map(item=>item.data()));
+        if (seq !== sequence) return;
+        status.textContent = '找到 ' + res.results.length + ' 个结果';
+        for (const item of data) {
+          const a = document.createElement('a');
+          a.href = item.url;
+          const heading = document.createElement('strong');
+          heading.textContent = item.meta?.title || item.url;
+          const excerpt = document.createElement('p');
+          excerpt.textContent = item.excerpt || '';
+          a.append(heading,excerpt);
+          results.append(a);
+        }
+      } catch { if (seq === sequence) status.textContent = '搜索出错，请稍后重试。'; }
+    }
+    const params = new URLSearchParams(location.search);
+    input.value = params.get('q') || '';
+    input.addEventListener('input',search);
+    if (input.value) search();
+  </script>
+</Base>
